@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	"github.com/martinlindhe/notify"
+	"time"
 )
 
 const ServiceName = "sourceroostersvc"
@@ -18,9 +19,14 @@ type Parameters struct {
 	Root struct {
 		Watch struct {
 			Directories []string `yaml:"directories"`
-			Files       []string `yaml:"files"`
+			Matches     Matches  `yaml:"matches"`
 		} `yaml:"watch"`
 	} `yaml:"parameters"`
+}
+
+type Matches struct {
+	Whitelist []string `yaml:"whitelist"`
+	Blacklist []string `yaml:"blacklist"`
 }
 
 func main() {
@@ -54,7 +60,7 @@ func main() {
 	files := make(chan string, 1000)
 	go func() {
 		for _, dirPath := range p.Root.Watch.Directories {
-			findFiles(dirPath, p.Root.Watch.Files, files, done)
+			findFiles(dirPath, p.Root.Watch.Matches, files, done)
 		}
 	}()
 
@@ -67,16 +73,24 @@ func main() {
 	for range p.Root.Watch.Directories {
 		<-done
 	}
+	time.Sleep(5 * time.Second)
 
 	log.Fatalln("See you!")
 }
 
-func findFiles(parentDir string, extList []string, files chan string, done chan bool) {
+func findFiles(parentDir string, extList Matches, files chan string, done chan bool) {
 	go func() {
 		filepath.Walk(parentDir, func(path string, f os.FileInfo, _ error) error {
 			if !f.IsDir() {
-				for _, ext := range extList {
-					if ok, _ := regexp.MatchString(ext, f.Name()); ok {
+
+				for _, black := range extList.Blacklist{
+					if ok, _ := regexp.MatchString(black, path); ok {
+						return nil
+					}
+				}
+
+				for _, ext := range extList.Whitelist {
+					if ok, _ := regexp.MatchString(ext, path); ok {
 						ap, err := filepath.Abs(path)
 						checkErr(err)
 						files <- ap
