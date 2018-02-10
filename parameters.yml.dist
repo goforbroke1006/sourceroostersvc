@@ -1,0 +1,29 @@
+parameters:
+  watch:
+    directories:
+      - /home/goforbroke/AndroidStudioProjects
+      - /home/goforbroke/CLionProjects
+      - /home/goforbroke/IdeaProjects
+      - /home/goforbroke/projects
+      - /home/goforbroke/PycharmProjects
+    files:
+      - "(.*)\\.sh$"
+      - "(.*)\\.c$"
+      - "(.*)\\.cpp$"
+      - "(.*)\\.h$"
+      - "Makefile"
+      - "CMakeLists.txt"
+#      - "(.*)\\.go$"
+#      - "(.*)\\.toml$"
+#      - "(.*)\\.yml$"
+#      - "(.*)\\.yaml$"
+#      - "(.*)\\.php$"
+#      - "(.*)\\.html$"
+#      - "(.*)\\.twig$"
+#      - "(.*)\\.css$"
+#      - "(.*)\\.js$"
+#      - "(.*)\\.java$"
+#      - "(.*)\\.xml$"
+#      - "(.*)\\.properties$"
+#      - "pom\\.xml"
+#      - "(.*)\\.wsdl"
