@@ -7,10 +7,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
+	//"regexp"
 
+	"github.com/goforbroke1006/sourceroostersvc"
 	"github.com/martinlindhe/notify"
 	"time"
+	"regexp"
 )
 
 const ServiceName = "sourceroostersvc"
@@ -81,20 +83,25 @@ func main() {
 func findFiles(parentDir string, extList Matches, files chan string, done chan bool) {
 	go func() {
 		filepath.Walk(parentDir, func(path string, f os.FileInfo, _ error) error {
-			if !f.IsDir() {
 
-				for _, black := range extList.Blacklist{
-					if ok, _ := regexp.MatchString(black, path); ok {
-						return nil
-					}
+			for _, black := range extList.Blacklist{
+				if ok, _ := regexp.MatchString(black, path); ok {
+					return nil
 				}
+			}
 
+			if !f.IsDir() {
+				/*
 				for _, ext := range extList.Whitelist {
 					if ok, _ := regexp.MatchString(ext, path); ok {
 						ap, err := filepath.Abs(path)
 						checkErr(err)
 						files <- ap
 					}
+				}*/
+			} else {
+				if sourceroostersvc.IsProjectDir(path) {
+					files <- path
 				}
 			}
 			return nil
