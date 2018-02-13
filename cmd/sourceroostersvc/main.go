@@ -11,9 +11,13 @@ import (
 
 	"github.com/goforbroke1006/sourceroostersvc"
 	"github.com/martinlindhe/notify"
-	"time"
 	"regexp"
+	"time"
+	"runtime"
 )
+
+var workers = runtime.NumCPU()
+var rooster = sourceroostersvc.NewService()
 
 const ServiceName = "sourceroostersvc"
 
@@ -32,6 +36,8 @@ type Matches struct {
 }
 
 func main() {
+	runtime.GOMAXPROCS(workers)
+
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	checkErr(err)
 
@@ -51,7 +57,7 @@ func main() {
 			dirsText = dirsText + sub.Name() + "\n"
 		}
 	}
-	notify.Notify("app name",
+	notify.Notify(ServiceName,
 		"I watch on your ungly projects, piece of trash!",
 		dirsText,
 		dir+"/icon.png",
@@ -84,7 +90,7 @@ func findFiles(parentDir string, extList Matches, files chan string, done chan b
 	go func() {
 		filepath.Walk(parentDir, func(path string, f os.FileInfo, _ error) error {
 
-			for _, black := range extList.Blacklist{
+			for _, black := range extList.Blacklist {
 				if ok, _ := regexp.MatchString(black, path); ok {
 					return nil
 				}
@@ -92,15 +98,15 @@ func findFiles(parentDir string, extList Matches, files chan string, done chan b
 
 			if !f.IsDir() {
 				/*
-				for _, ext := range extList.Whitelist {
-					if ok, _ := regexp.MatchString(ext, path); ok {
-						ap, err := filepath.Abs(path)
-						checkErr(err)
-						files <- ap
-					}
-				}*/
+					for _, ext := range extList.Whitelist {
+						if ok, _ := regexp.MatchString(ext, path); ok {
+							ap, err := filepath.Abs(path)
+							checkErr(err)
+							files <- ap
+						}
+					}*/
 			} else {
-				if sourceroostersvc.IsProjectDir(path) {
+				if rooster.IsProjectDir(path) {
 					files <- path
 				}
 			}
