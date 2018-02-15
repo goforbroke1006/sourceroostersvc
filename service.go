@@ -1,25 +1,23 @@
 package sourceroostersvc
 
 import (
+	"os"
 	"regexp"
 	"time"
-	"os"
 )
 
 type Rooster interface {
 	FileExists(path string) bool
 	IsProjectDir(dir string) bool
+	DetectProject(dir string) Project
 	IsSourceFile(filename string) bool
 	IsResourceFile(filename string) bool
-	GetLastUpdate(dir string) time.Duration
+	GetLastUpdate(path string) (time.Time, error)
 	HasCVS(dir string) bool
 }
 
 type rooster struct {
-	sources struct {
-		whitelist []string
-		blacklist []string
-	}
+	sources []string
 }
 
 func (svc *rooster) FileExists(path string) bool {
@@ -31,7 +29,7 @@ func (svc *rooster) FileExists(path string) bool {
 
 func (svc *rooster) IsProjectDir(dir string) bool {
 	// maven project
-	if svc.FileExists(dir + "/pom.xml") && svc.FileExists(dir+"/src/") {
+	if svc.FileExists(dir+"/pom.xml") && svc.FileExists(dir+"/src/") {
 		return true
 	}
 
@@ -72,13 +70,12 @@ func (svc *rooster) IsProjectDir(dir string) bool {
 	return false
 }
 
+func (svc *rooster) DetectProject(dir string) Project {
+	return Project{} // TODO: implement method
+}
+
 func (svc *rooster) IsSourceFile(filename string) bool {
-	for _, black := range svc.sources.blacklist {
-		if ok, _ := regexp.MatchString(black, filename); ok {
-			return false
-		}
-	}
-	for _, white := range svc.sources.whitelist {
+	for _, white := range svc.sources {
 		if ok, _ := regexp.MatchString(white, filename); ok {
 			return true
 		}
@@ -90,14 +87,20 @@ func (svc *rooster) IsResourceFile(filename string) bool {
 	return false
 }
 
-func (svc *rooster) GetLastUpdate(dir string) time.Duration {
-	return 0
+func (svc *rooster) GetLastUpdate(path string) (time.Time, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return info.ModTime(), nil
 }
 
 func (svc *rooster) HasCVS(dir string) bool {
 	return svc.FileExists(dir+"/.git/") || svc.FileExists(dir+"/.svn/")
 }
 
-func NewService(srcWhitelist, srcBlacklist []string) Rooster {
-	return &rooster{}
+func NewService(srcWhitelist []string) Rooster {
+	return &rooster{
+		sources: srcWhitelist,
+	}
 }

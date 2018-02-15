@@ -12,12 +12,12 @@ import (
 	"github.com/goforbroke1006/sourceroostersvc"
 	"github.com/martinlindhe/notify"
 	"regexp"
-	"time"
 	"runtime"
+	"time"
 )
 
 var workers = runtime.NumCPU()
-var rooster = sourceroostersvc.NewService()
+var rooster sourceroostersvc.Rooster = nil
 
 const ServiceName = "sourceroostersvc"
 
@@ -49,6 +49,10 @@ func main() {
 	err = yaml.Unmarshal(data, &p)
 	checkErr(err)
 
+	rooster = sourceroostersvc.NewService(
+		p.Root.Watch.Matches.Whitelist,
+	)
+
 	dirsText := ""
 	for _, dirPath := range p.Root.Watch.Directories {
 		fi, err := ioutil.ReadDir(dirPath)
@@ -65,7 +69,7 @@ func main() {
 
 	done := make(chan bool, len(p.Root.Watch.Directories))
 
-	files := make(chan string, 1000)
+	files := make(chan sourceroostersvc.Project, 10)
 	go func() {
 		for _, dirPath := range p.Root.Watch.Directories {
 			findFiles(dirPath, p.Root.Watch.Matches, files, done)
@@ -74,7 +78,7 @@ func main() {
 
 	go func() {
 		for f := range files {
-			fmt.Println(f)
+			fmt.Println(f.)
 		}
 	}()
 
@@ -86,7 +90,7 @@ func main() {
 	log.Fatalln("See you!")
 }
 
-func findFiles(parentDir string, extList Matches, files chan string, done chan bool) {
+func findFiles(parentDir string, extList Matches, files chan sourceroostersvc.Project, done chan bool) {
 	go func() {
 		filepath.Walk(parentDir, func(path string, f os.FileInfo, _ error) error {
 
@@ -106,8 +110,8 @@ func findFiles(parentDir string, extList Matches, files chan string, done chan b
 						}
 					}*/
 			} else {
-				if rooster.IsProjectDir(path) {
-					files <- path
+				if ok, proj:=rooster.IsProjectDir(path); ok && proj != nil {
+					files <- *proj
 				}
 			}
 			return nil
