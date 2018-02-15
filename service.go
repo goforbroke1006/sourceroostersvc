@@ -1,6 +1,7 @@
 package sourceroostersvc
 
 import (
+	"regexp"
 	"time"
 	"os"
 )
@@ -11,9 +12,14 @@ type Rooster interface {
 	IsSourceFile(filename string) bool
 	IsResourceFile(filename string) bool
 	GetLastUpdate(dir string) time.Duration
+	HasCVS(dir string) bool
 }
 
 type rooster struct {
+	sources struct {
+		whitelist []string
+		blacklist []string
+	}
 }
 
 func (svc *rooster) FileExists(path string) bool {
@@ -25,7 +31,7 @@ func (svc *rooster) FileExists(path string) bool {
 
 func (svc *rooster) IsProjectDir(dir string) bool {
 	// maven project
-	if svc.FileExists(dir + "/pom.xml") {
+	if svc.FileExists(dir + "/pom.xml") && svc.FileExists(dir+"/src/") {
 		return true
 	}
 
@@ -67,6 +73,16 @@ func (svc *rooster) IsProjectDir(dir string) bool {
 }
 
 func (svc *rooster) IsSourceFile(filename string) bool {
+	for _, black := range svc.sources.blacklist {
+		if ok, _ := regexp.MatchString(black, filename); ok {
+			return false
+		}
+	}
+	for _, white := range svc.sources.whitelist {
+		if ok, _ := regexp.MatchString(white, filename); ok {
+			return true
+		}
+	}
 	return false
 }
 
@@ -78,6 +94,10 @@ func (svc *rooster) GetLastUpdate(dir string) time.Duration {
 	return 0
 }
 
-func NewService() Rooster {
+func (svc *rooster) HasCVS(dir string) bool {
+	return svc.FileExists(dir+"/.git/") || svc.FileExists(dir+"/.svn/")
+}
+
+func NewService(srcWhitelist, srcBlacklist []string) Rooster {
 	return &rooster{}
 }
