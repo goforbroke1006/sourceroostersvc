@@ -3,6 +3,7 @@ package sourceroostersvc
 import (
 	"os"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -13,7 +14,7 @@ type Rooster interface {
 	IsSourceFile(filename string) bool
 	IsResourceFile(filename string) bool
 	GetLastUpdate(path string) (time.Time, error)
-	HasCVS(dir string) bool
+	GetCVSRemoteLink(dir string) string
 }
 
 type rooster struct {
@@ -71,7 +72,11 @@ func (svc *rooster) IsProjectDir(dir string) bool {
 }
 
 func (svc *rooster) DetectProject(dir string) Project {
-	return Project{} // TODO: implement method
+	pathParts := strings.Split(dir, "/")
+	return Project{
+		Name: pathParts[len(pathParts)-1],
+		Path: dir,
+	} // TODO: implement method
 }
 
 func (svc *rooster) IsSourceFile(filename string) bool {
@@ -95,8 +100,14 @@ func (svc *rooster) GetLastUpdate(path string) (time.Time, error) {
 	return info.ModTime(), nil
 }
 
-func (svc *rooster) HasCVS(dir string) bool {
-	return svc.FileExists(dir+"/.git/") || svc.FileExists(dir+"/.svn/")
+func (svc *rooster) GetCVSRemoteLinks(dir string) map[string]string {
+	if svc.FileExists(dir+"/.git/") {
+		return map[string]string {}
+	}
+	if svc.FileExists(dir+"/.svn/") {
+		return map[string]string {}
+	}
+	return map[string]string {} // TODO: implement this method
 }
 
 func NewService(srcWhitelist []string) Rooster {
