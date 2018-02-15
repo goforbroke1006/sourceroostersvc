@@ -110,8 +110,8 @@ func findFiles(parentDir string, extList Matches, files chan sourceroostersvc.Pr
 						}
 					}*/
 			} else {
-				if ok, proj:=rooster.IsProjectDir(path); ok && proj != nil {
-					files <- *proj
+				if rooster.IsProjectDir(path) {
+					files <- rooster.DetectProject(path)
 				}
 			}
 			return nil
