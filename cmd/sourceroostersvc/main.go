@@ -78,7 +78,7 @@ func main() {
 
 	go func() {
 		for f := range files {
-			fmt.Println(f.)
+			fmt.Println(f.ToString())
 		}
 	}()
 
