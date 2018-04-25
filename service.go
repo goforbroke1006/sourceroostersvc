@@ -5,10 +5,10 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	fs "github.com/goforbroke1006/sourceroostersvc/filesystem"
 )
 
 type Rooster interface {
-	FileExists(path string) bool
 	IsProjectDir(dir string) bool
 	DetectProject(dir string) Project
 	IsSourceFile(filename string) bool
@@ -21,50 +21,45 @@ type rooster struct {
 	sources []string
 }
 
-func (svc *rooster) FileExists(path string) bool {
-	if _, err := os.Stat(path); err == nil {
-		return true
-	}
-	return false
-}
+
 
 func (svc *rooster) IsProjectDir(dir string) bool {
 	// maven project
-	if svc.FileExists(dir+"/pom.xml") && svc.FileExists(dir+"/src/") {
+	if fs.FileExists(dir+"/pom.xml") && fs.FileExists(dir+"/src/") {
 		return true
 	}
 
 	// any project
-	if svc.FileExists(dir + "/Makefile") {
+	if fs.FileExists(dir + "/Makefile") {
 		return true
 	}
 
 	// c++ project
-	if svc.FileExists(dir + "/CMakeLists.txt") {
+	if fs.FileExists(dir + "/CMakeLists.txt") {
 		return true
 	}
 
 	// python project
-	if svc.FileExists(dir + "/requirements.txt") {
+	if fs.FileExists(dir + "/requirements.txt") {
 		return true
 	}
 
 	// php + composer project
-	if svc.FileExists(dir+"/composer.json") &&
-		svc.FileExists(dir+"/composer.lock") &&
-		svc.FileExists(dir+"/src/") {
+	if fs.FileExists(dir+"/composer.json") &&
+		fs.FileExists(dir+"/composer.lock") &&
+		fs.FileExists(dir+"/src/") {
 		return true
 	}
 
 	// android project
-	if svc.FileExists(dir+"/build.gradle") &&
-		svc.FileExists(dir+"/local.properties") &&
-		svc.FileExists(dir+"/settings.gradle") {
+	if fs.FileExists(dir+"/build.gradle") &&
+		fs.FileExists(dir+"/local.properties") &&
+		fs.FileExists(dir+"/settings.gradle") {
 		return true
 	}
 
 	// golang project
-	if svc.FileExists(dir+"/cmd") && svc.FileExists(dir+"/vendor") {
+	if fs.FileExists(dir+"/cmd") && fs.FileExists(dir+"/vendor") {
 		return true
 	}
 
@@ -72,9 +67,8 @@ func (svc *rooster) IsProjectDir(dir string) bool {
 }
 
 func (svc *rooster) DetectProject(dir string) Project {
-	pathParts := strings.Split(dir, "/")
 	return Project{
-		Name: pathParts[len(pathParts)-1],
+		Name: fs.GetDirSimpleName(dir),
 		Path: dir,
 	} // TODO: implement method
 }
@@ -101,10 +95,10 @@ func (svc *rooster) GetLastUpdate(path string) (time.Time, error) {
 }
 
 func (svc *rooster) GetCVSRemoteLinks(dir string) map[string]string {
-	if svc.FileExists(dir+"/.git/") {
+	if fs.FileExists(dir+"/.git/") {
 		return map[string]string {}
 	}
-	if svc.FileExists(dir+"/.svn/") {
+	if fs.FileExists(dir+"/.svn/") {
 		return map[string]string {}
 	}
 	return map[string]string {} // TODO: implement this method
